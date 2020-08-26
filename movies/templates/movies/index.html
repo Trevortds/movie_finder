@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div id="root">
+
+    <div class="row">
+
+        <div class="col-9 mx-auto mt-5">
+            [[ search_term ]]
+            <div class="alert alert-secondary" role="alert">
+                <input v-model="search_term">
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+{#<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>#}
+{#<script src="https://cdn.jsdelivr.net/npm/vue"></script>#}
+<script>
+    headers = {"X-CSRFTOKEN": Cookies.get('csrftoken')};
+
+    app = new Vue({
+        delimiters: ["[[", "]]"],
+        el: "#root",
+        data: {
+            search_term: "Input Search Here",
+            movies: []
+        },
+        mounted: function() {
+            var self = this;
+            axios.post(
+                {{ request.path }},
+                {test: "test"},
+                {headers: headers}
+            ).then( response => {
+                if (response.data.result) {
+                    console.log(`Got ${Object.entries(response.data.result).length} answers`)
+                    self.search_term = response.data.result
+                }
+            }).catch(error => {
+                console.log(error)
+            })
+        }
+    })
+</script>
+{% endblock %}

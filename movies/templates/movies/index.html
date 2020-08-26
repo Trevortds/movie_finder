@@ -6,13 +6,41 @@
     <div class="row">
 
         <div class="col-9 mx-auto mt-5">
-            [[ search_term ]]
             <div class="alert alert-secondary" role="alert">
-                <input v-model="search_term">
+                <input v-model="search_query" v-on:keyup.enter="search">
+                <button type="button" class="btn btn-primary" v-on:click="search">
+                    Search
+                </button>
             </div>
         </div>
 
     </div>
+
+    <div class="row">
+        <div class="col-9 mx-auto">
+            <div class="row" v-for="i in Math.ceil(movies.length / 5)">
+                <div class="col-10 col-md-5 col-lg-3 col-xl-2 mx-auto" v-for="movie in movies.slice((i-1) * 5, i * 5)">
+
+                    <div class="card" style="width: 18rem;">
+                        <img v-bind:src="'https://image.tmdb.org/t/p/w500/' + movie.poster_path" class="card-img-top"
+                             v-if="movie.poster_path !== ''">
+{#                        {% if instance.image %}#}
+{#                            <img src="{{ instance.image.url }}" class="card-img-top" alt="{{ instance.title }}">#}
+{#                        {% endif %}#}
+                        <div class="card-body">
+                            <h5 class="card-title">[[ movie.title ]]</h5>
+                            <p class="card-text">[[ movie.overview | truncate ]]</p>
+                            <p class="card-text">[[ movie.release_date ]]</p>
+                    {#        <a href="{{ instance.get_absolute_url }}" class="btn btn-primary">View</a>#}
+                            <a v-bind:href="'/movies/' + movie.id" class="btn btn-primary">View</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 </div>
 
 
@@ -24,27 +52,75 @@
 <script>
     headers = {"X-CSRFTOKEN": Cookies.get('csrftoken')};
 
+    async function get_movies(search_query) {
+        var results = [];
+        const response = await axios.post(
+            {{ request.path }},
+            {search_query: search_query},
+            {headers: headers}
+        );
+        results = await response.data["results"];
+        return results;
+        {#axios.post(#}
+        {#    {{ request.path }},#}
+        {#    {search_query: search_query},#}
+        {#    {headers: headers}#}
+        {#).then( response => {#}
+        {#    if (response.data.results) {#}
+        {#        console.log(`Got ${Object.entries(response.data.results).length} answers`)#}
+        {#        results = response.data.results#}
+        {#    }#}
+        {# }).catch(error => {#}
+        {#    console.log(error)#}
+        {# })#}
+        {#return results#}
+    }
+
+
+
     app = new Vue({
         delimiters: ["[[", "]]"],
         el: "#root",
+        component: [
+    	'movie-cards'
+        ],
         data: {
-            search_term: "Input Search Here",
+            search_query: "Input Search Here",
             movies: []
         },
-        mounted: function() {
-            var self = this;
-            axios.post(
-                {{ request.path }},
-                {test: "test"},
-                {headers: headers}
-            ).then( response => {
-                if (response.data.result) {
-                    console.log(`Got ${Object.entries(response.data.result).length} answers`)
-                    self.search_term = response.data.result
-                }
-            }).catch(error => {
-                console.log(error)
+        methods:{
+          search: function () {
+              get_movies(this.search_query).then(result => {
+                this.movies = result;
             })
+          }
+        },
+        filters:{
+            truncate: function(value) {
+                var limit = 50;
+                if (value.length > limit) {
+                    value = value.substring(0, limit) + '...';
+                }
+                return value;
+            }
+        },
+        mounted: function() {
+            get_movies("").then(result => {
+                this.movies = result;
+            })
+            {#var self = this;#}
+            {#axios.post(#}
+            {#    {{ request.path }},#}
+            {#    {search_query: self.search_query},#}
+            {#    {headers: headers}#}
+            {#).then( response => {#}
+            {#    if (response.data.results) {#}
+            {#        console.log(`Got ${Object.entries(response.data.result).length} answers`)#}
+            {#        self.movies = response.data.results#}
+            {#    }#}
+            {# }).catch(error => {#}
+            {#    console.log(error)#}
+            {# })#}
         }
     })
 </script>

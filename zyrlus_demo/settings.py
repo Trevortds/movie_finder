@@ -23,6 +23,11 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 if not SECRET_KEY:
     from .secrets import SECRET_KEY  # should throw an error in production if secretkey is not present
 
+MOVIE_DATABASE_KEY = os.environ.get("MOVIE_DATABASE_KEY")
+if not MOVIE_DATABASE_KEY:
+    from .secrets import MOVIE_DATABASE_KEY
+
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
